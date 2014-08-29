@@ -51,17 +51,19 @@ public final class Main {
                                          ExecutorService executor,
                                          ThreadLocalZipFileProcessor processor) throws IOException {
         String[] files = dir.list();
-        for (String fileName : files) {
-            File file = new File(dir, fileName);
+        if (files != null) {
+            for (String fileName : files) {
+                File file = new File(dir, fileName);
 
-            if (file.isDirectory()) {
-                processDirectory(file, executor, processor);
-            } else {
-                if (ZipFileProcessor.isArchive(fileName)) {
-                    ZipFileRunnable zfr = new ZipFileRunnable(processor, file);
-                    executor.submit(zfr);
-                } else if (fileName.endsWith(".class")) {
-                    System.out.println(file.getCanonicalPath());
+                if (file.isDirectory()) {
+                    processDirectory(file, executor, processor);
+                } else {
+                    if (ZipFileProcessor.isArchive(fileName)) {
+                        ZipFileRunnable zfr = new ZipFileRunnable(processor, file);
+                        executor.submit(zfr);
+                    } else if (fileName.endsWith(".class")) {
+                        System.out.println(file.getCanonicalPath());
+                    }
                 }
             }
         }
