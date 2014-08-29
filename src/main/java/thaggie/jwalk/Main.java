@@ -23,7 +23,7 @@ public final class Main {
 
         File file = new File(path);
         if (!file.exists()) {
-            System.out.println(file.getAbsolutePath() + " is not a file or directory.");
+            System.out.println(file.getAbsolutePath() + ": No such file or directory.");
             System.exit(1);
         } else if (file.isFile()) {
             if (ZipFileProcessor.isArchive(file.getName())) {
@@ -54,15 +54,16 @@ public final class Main {
         if (files != null) {
             for (String fileName : files) {
                 File file = new File(dir, fileName);
-
-                if (file.isDirectory()) {
-                    processDirectory(file, executor, processor);
-                } else {
-                    if (ZipFileProcessor.isArchive(fileName)) {
-                        ZipFileRunnable zfr = new ZipFileRunnable(processor, file);
-                        executor.submit(zfr);
-                    } else if (fileName.endsWith(".class")) {
-                        System.out.println(file.getCanonicalPath());
+                if (file.exists()) {
+                    if (file.isDirectory()) {
+                        processDirectory(file, executor, processor);
+                    } else {
+                        if (ZipFileProcessor.isArchive(fileName)) {
+                            ZipFileRunnable zfr = new ZipFileRunnable(processor, file);
+                            executor.submit(zfr);
+                        } else if (fileName.endsWith(".class")) {
+                            System.out.println(file.getCanonicalPath());
+                        }
                     }
                 }
             }
