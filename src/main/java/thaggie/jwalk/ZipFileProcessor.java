@@ -29,6 +29,12 @@ public class ZipFileProcessor {
     private byte[] buffer = new byte[BUFFER_SIZE];
     private final ByteArrayOutputStream baos = new ByteArrayOutputStream(BAOS_INITIAL_SIZE);
 
+    private final String match;
+
+    public ZipFileProcessor(String match) {
+        this.match = match;
+    }
+
     /**
      * Helper to test a file name to see if it ends with jar, zip or war
      * 
@@ -67,7 +73,9 @@ public class ZipFileProcessor {
             while ((ze = zis.getNextEntry()) != null) {
                 String name = ze.getName();
                 if (name.endsWith(".class")) {
-                    writeWithPath(System.out, path, name);
+                    if (shouldWrite(name, match)) {
+                        writeWithPath(System.out, path, name);
+                    }
                 } else if (isArchive(name)) {
                     byte[] entryData = readCurrenZipEntry(zis, ze);
                     String[] newPath = Arrays.copyOf(path, path.length + 1);
@@ -104,5 +112,13 @@ public class ZipFileProcessor {
         }
         byte[] bytes = baos.toByteArray();
         return bytes;
+    }
+
+    public static boolean shouldWrite(String fileName, String match) {
+        if (match == null) {
+            return true;
+        }
+
+        return fileName.substring(0, fileName.length() - 6).contains(match);
     }
 }

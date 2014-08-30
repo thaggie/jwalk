@@ -14,12 +14,13 @@ public final class Main {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        if (args.length != 1) {
-            System.out
-                .println("Specify a file path to walk through its directories, zip files and jars looking for class files.");
+        if (args.length != 1 && args.length != 2) {
+            System.out.println("Usage: jwalk [path/to/directory/or/archive] [filter]");
             System.exit(1);
         }
         String path = args[0];
+
+        String match = (args.length == 2) ? args[1] : null;
 
         File file = new File(path);
         if (!file.exists()) {
@@ -27,7 +28,7 @@ public final class Main {
             System.exit(1);
         } else if (file.isFile()) {
             if (ZipFileProcessor.isArchive(file.getName())) {
-                ZipFileProcessor zp = new ZipFileProcessor();
+                ZipFileProcessor zp = new ZipFileProcessor(match);
                 zp.processZipFile(file);
             } else {
                 System.out.println(file.getAbsolutePath() + " is not recognised as an archive.");
@@ -37,8 +38,8 @@ public final class Main {
             int cores = Runtime.getRuntime().availableProcessors();
             ExecutorService executor = Executors.newFixedThreadPool(cores);
 
-            ThreadLocalZipFileProcessor processor = new ThreadLocalZipFileProcessor();
-            processDirectory(file, executor, processor);
+            ThreadLocalZipFileProcessor processor = new ThreadLocalZipFileProcessor(match);
+            processDirectory(file, executor, processor, match);
 
             executor.shutdown();
 
@@ -49,20 +50,23 @@ public final class Main {
 
     private static void processDirectory(File dir,
                                          ExecutorService executor,
-                                         ThreadLocalZipFileProcessor processor) throws IOException {
+                                         ThreadLocalZipFileProcessor processor,
+                                         String match) throws IOException {
         String[] files = dir.list();
         if (files != null) {
             for (String fileName : files) {
                 File file = new File(dir, fileName);
                 if (file.exists()) {
                     if (file.isDirectory()) {
-                        processDirectory(file, executor, processor);
+                        processDirectory(file, executor, processor, match);
                     } else {
                         if (ZipFileProcessor.isArchive(fileName)) {
                             ZipFileRunnable zfr = new ZipFileRunnable(processor, file);
                             executor.submit(zfr);
                         } else if (fileName.endsWith(".class")) {
-                            System.out.println(file.getCanonicalPath());
+                            if (ZipFileProcessor.shouldWrite(fileName, match)) {
+                                System.out.println(file.getCanonicalPath());
+                            }
                         }
                     }
                 }
@@ -71,9 +75,15 @@ public final class Main {
     }
 
     private static class ThreadLocalZipFileProcessor extends ThreadLocal<ZipFileProcessor> {
+        private final String match;
+
+        public ThreadLocalZipFileProcessor(String match) {
+            this.match = match;
+        }
+
         @Override
         protected ZipFileProcessor initialValue() {
-            return new ZipFileProcessor();
+            return new ZipFileProcessor(match);
         }
     }
 
