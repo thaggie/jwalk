@@ -40,7 +40,7 @@ java -jar $scriptdir/jwalk.jar $@
 ```
 So this would be somewhere in your `PATH` with jwalk.jar in the same directory. 
 
-```
+
 This woud mean the example above would become:
 ```
 jwalk build Proc
