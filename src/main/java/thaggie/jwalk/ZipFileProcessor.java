@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package thaggie.jwalk;
 
@@ -19,7 +19,7 @@ import java.util.zip.ZipInputStream;
 /**
  * This works through an archive file looking for classes NOTE: this class is only supposed to be
  * called with on thread at a time.
- * 
+ *
  * @author thaggie
  */
 public class ZipFileProcessor {
@@ -29,6 +29,8 @@ public class ZipFileProcessor {
     private byte[] buffer = new byte[BUFFER_SIZE];
     private final ByteArrayOutputStream baos = new ByteArrayOutputStream(BAOS_INITIAL_SIZE);
 
+    private static final String[] ARCHIVE_EXTENSIONS = {".jar", ".zip", ".war", ".ear"};
+
     private final String match;
 
     public ZipFileProcessor(String match) {
@@ -37,17 +39,23 @@ public class ZipFileProcessor {
 
     /**
      * Helper to test a file name to see if it ends with jar, zip or war
-     * 
+     *
      * @param fileName
      * @return
      */
     public static boolean isArchive(String fileName) {
-        return fileName.endsWith(".jar") || fileName.endsWith(".zip") || fileName.endsWith(".war");
+
+        for (String ext : ARCHIVE_EXTENSIONS) {
+            if (fileName.endsWith(ext)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * Work through a file and its archives writing out all .class files.
-     * 
+     *
      * @param file
      * @throws IOException
      */
